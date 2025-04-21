@@ -30,6 +30,21 @@ with ui.sidebar(open="desktop"):
         selected=["Lunch", "Dinner"], # Opciones seleccionadas inicialmente
         inline=True,                 # Mostrar horizontalmente
     )
+
+    ui.input_selectize(  
+    "selectize",  
+    "Days of the Week",  
+    {
+        
+        "Thu": "Thursday", 
+        "Fri": "Friday",  
+        "Sat": "Saturday",
+        "Sun": "Sunday"
+    },
+    multiple=True,
+    selected=["Thu", "Fri", "Sat", "Sun"]  # Se quiser todos selecionados por padrão
+)
+    
     ui.input_action_button("reset", "Reset filter") # Botón para reiniciar filtros
 
     # Definir iconos para la interfaz
@@ -163,9 +178,11 @@ ui.include_css(app_dir / "styles.css")
 @reactive.calc
 def tips_data():
     bill = input.total_bill()  # Obtener rango de facturas seleccionado
+    selected_days = input.selectize()
     idx1 = tips.total_bill.between(bill[0], bill[1])  # Filtrar por factura
     idx2 = tips.time.isin(input.time())  # Filtrar por momento
-    return tips[idx1 & idx2]  # Devolver datos filtrados
+    idx_day = tips.day.isin(selected_days) if selected_days else True
+    return tips[idx1 & idx2 & idx_day]  # Devolver datos filtrados
 
 # Efecto reactivo para restablecer filtros cuando se hace clic en el botón
 @reactive.effect
@@ -173,3 +190,7 @@ def tips_data():
 def _():
     ui.update_slider("total_bill", value=bill_rng)  # Restablecer control deslizante
     ui.update_checkbox_group("time", selected=["Lunch", "Dinner"])  # Restablecer casillas
+    ui.update_selectize(
+        "selectize",
+        selected=["Thu", "Fri", "Sat", "Sun"]
+    )
