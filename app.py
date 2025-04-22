@@ -7,6 +7,15 @@ from shiny import reactive, render
 from shiny.express import input, ui
 from shinywidgets import render_plotly
 
+    # Definir iconos para la interfaz
+ICONS = {
+    "user": fa.icon_svg("user", "regular"),
+    "wallet": fa.icon_svg("wallet"),
+    "currency-euro": fa.icon_svg("euro-sign"),
+    "ellipsis": fa.icon_svg("ellipsis"),
+    "users": fa.icon_svg("users"),
+}
+
 # Calcular el rango de valores de facturas para el control deslizante
 bill_rng = (min(tips.total_bill), max(tips.total_bill))
 
@@ -42,18 +51,14 @@ with ui.sidebar(open="desktop"):
         "Sun": "Sunday"
     },
     multiple=True,
-    selected=["Thu", "Fri", "Sat", "Sun"]  # Se quiser todos selecionados por padrão
+    selected=["Thu", "Fri", "Sat", "Sun"]  #seleccionar por padrão
 )
     
+
     ui.input_action_button("reset", "Reset filter") # Botón para reiniciar filtros
 
     # Definir iconos para la interfaz
-ICONS = {
-    "user": fa.icon_svg("user", "regular"),
-    "wallet": fa.icon_svg("wallet"),
-    "currency-euro": fa.icon_svg("euro-sign"),
-    "ellipsis": fa.icon_svg("ellipsis"),
-}
+
 
 # Crear fila de cajas de valores
 with ui.layout_columns(fill=False):
@@ -73,10 +78,23 @@ with ui.layout_columns(fill=False):
         def average_tip():
             d = tips_data()
             if d.shape[0] > 0:
-                perc = d.tip / d.total_bill  # Calcular porcentaje de propina
+                perc = d.tip / d.total_bill  # Calcular promedio de propina
                 f"{perc.mean():.1%}"         # Formatear como porcentaje
 
     # Tercera caja de valor: Factura promedio
+    with ui.value_box(showcase=ICONS["users"]):
+        "Promedio del Grupo"
+
+        @render.express
+        def promedio_bill():
+            d = tips_data()
+            if d.shape[0] > 0:
+                bill = d["size"].mean()  # Calcular factura promedio
+                f"{bill:.1f}"              # Formatear como moneda
+
+
+
+    # Quarta caja de valor: Factura promedio
     with ui.value_box(showcase=ICONS["currency-euro"]):
         "Factura Media"
 
@@ -109,17 +127,22 @@ with ui.layout_columns(col_widths=[6, 6, 12]):
                     None,
                     ["none", "sex", "smoker", "day", "time"],
                     inline=True,
+                    
                 )
+                ui.input_checkbox("size", "tamaño del punto", False)
 
         # Renderizar el gráfico de dispersión
         @render_plotly
         def scatterplot():
             color = input.scatter_color()
+            use_size = input.size()
+            
             return px.scatter(
                 tips_data(),
                 x="total_bill",
                 y="tip",
                 color=None if color == "none" else color,
+                size="size" if use_size else None,
                 trendline="lowess",  # Añadir línea de tendencia
             )
         
@@ -170,6 +193,51 @@ with ui.layout_columns(col_widths=[6, 6, 12]):
             )
 
             return plt
+    # Quarta tarjeta: Gráfico de hist 
+    with ui.card(full_screen=True):
+        with ui.card_header(class_="d-flex justify-content-between align-items-center"):
+            "Propinas por Día de la semana"
+            # Menú emergente para opciones de división
+            with ui.popover(title="Add a color variable"):
+                ICONS["ellipsis"]
+                ui.input_radio_buttons(
+                    "tip_perc_y",
+                    "Split by:",
+                    ["sex", "smoker", "day", "time"],
+                    selected="day",  # Valor predeterminado
+                    inline=True,
+                )    
+        # Renderizar el gráfico de densidad
+        @render_plotly
+        def tip_hist():
+            # Preparar datos
+            dat = tips_data().copy()
+            dat["percent"] = dat.total_bill  # Calcular porcentaje de propina
+
+            yvar = input.tip_perc_y()  # Variable para agrupar (por ejemplo: sex, smoker, day...)
+
+            # Crear histograma
+            fig = px.histogram(
+                dat,
+                x="percent",
+                color=yvar,               # Agrupar por categoría
+                marginal="rug",          # Mostrar rug plot opcional
+                nbins=30,                # Número de bins (puedes ajustar)
+                barmode="overlay",       # Para superposición de histogramas
+                opacity=0.6,             # Transparencia para melhor visualização
+                color_discrete_sequence=px.colors.qualitative.Set2,  # Colores bonitos
+            )
+
+            # Ajustes del layout
+            fig.update_layout(
+                title="Distribución del porcentaje de propina",
+                xaxis_title="Tip / Total bill",
+                yaxis_title="Frecuencia",
+                legend_title=yvar,
+                bargap=0.05
+            )
+
+            return fig
 
 ui.include_css(app_dir / "styles.css")
 

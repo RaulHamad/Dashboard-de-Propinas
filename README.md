@@ -472,4 +472,4 @@ Para consolidar tu aprendizaje, intenta estos ejercicios:
 2. **Añadir otra caja de valor**: Crea una nueva caja de valor que muestre el tamaño promedio del grupo (`size`)
 3. **Modificar el gráfico de dispersión**: Mejora el gráfico de dispersión entre factura total y propina añadiendo una opción en el menú emergente que permita al usuario visualizar el tamaño del grupo (`size`) mediante el tamaño de los puntos. Esto debe ser configurable mediante un checkbox que el usuario pueda activar o desactivar.
 4. **Personalizar estilos**: Modifica el archivo CSS para cambiar los colores de la interfaz
-5. **Añadir un gráfico de barras**: Crea una nueva tarjeta con un gráfico de barras que muestre el tot
+5. **Añadir un gráfico de barras**: Crea una nueva tarjeta con un gráfico de barras que muestre el total de propinas por día de la semana
