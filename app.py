@@ -301,3 +301,4 @@ def _():
     ui.update_slider('total_bill', value=bill_rng)
     ui.update_checkbox_group('time', selected=['Lunch', "Dinner"])
     ui.update_select("day", selected=["Thur", "Fri", "Sat", "Sun"])
+    #
